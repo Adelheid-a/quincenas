@@ -28,6 +28,7 @@ async function decrypt(pin) {
   if ((!res || !res.ok) && 'caches' in window) res = await caches.match('plan.enc.json');
   if (!res) throw new Error('sin plan');
   const box = await res.json();
+  localStorage.setItem(PLAN_KEY + '-id', box.salt);
   const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pin), 'PBKDF2', false, ['deriveKey']);
   const key = await crypto.subtle.deriveKey(
     { name: 'PBKDF2', salt: b64(box.salt), iterations: box.iter, hash: 'SHA-256' },
@@ -82,6 +83,15 @@ function lockScreen() {
 }
 
 const saved = localStorage.getItem(PLAN_KEY);
-if (saved) start(saved); else lockScreen();
+if (saved) {
+  start(saved);
+  // si subí un plan nuevo, se vuelve a pedir el PIN una vez para descifrarlo
+  fetch('plan.enc.json', { cache: 'no-cache' }).then((r) => r.ok && r.json()).then((box) => {
+    if (box && box.salt !== localStorage.getItem(PLAN_KEY + '-id')) {
+      localStorage.removeItem(PLAN_KEY);
+      location.reload();
+    }
+  }).catch(() => {});
+} else lockScreen();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
