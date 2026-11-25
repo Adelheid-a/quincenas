@@ -105,14 +105,20 @@ function strip(q, items) {
   const cells = days.map((d) => {
     const on = items.filter((i) => i.date && i.date.getTime() === d.getTime() && i.kind === 'pago');
     const done = on.length && on.every((i) => i.paid);
+    const left = on.filter((i) => !i.paid).length;
+    const part = on.length > 1 && left && left < on.length;
     const isToday = d.getTime() === t;
     const label = on.length || isToday || d.getTime() === q.start.getTime() ? d.getDate() : '';
-    return `<li class="day${on.length ? ' has' : ''}${done ? ' done' : ''}${isToday ? ' today' : ''}"
+    return `<li class="day${on.length ? ' has' : ''}${done ? ' done' : ''}${part ? ' part' : ''}${isToday ? ' today' : ''}"
       ${on.length ? `title="${esc(on.map((i) => i.name).join(', '))}"` : ''}>
-      <span class="dot">${on.length > 1 ? `<b>${on.length}</b>` : ''}</span>
+      <span class="dot">${on.length > 1 && left ? `<b>${left}</b>` : ''}</span>
       <span class="num">${label}</span></li>`;
   }).join('');
-  return `<ol class="strip" aria-hidden="true" style="--n:${days.length}">${cells}</ol>`;
+  // la línea se llena en blanco hasta hoy
+  const n = days.length;
+  const k = days.findIndex((d) => d.getTime() === t);
+  const fill = t > q.end.getTime() ? 1 : k < 0 ? 0 : (k + 0.5) / n;
+  return `<ol class="strip" aria-hidden="true" style="--n:${n};--fill:${fill}">${cells}</ol>`;
 }
 
 function row(q, i) {
@@ -136,12 +142,12 @@ function group(title, q, items, extraHtml = '') {
 
 function readout(q, T, all) {
   return `<section class="readout">
-      <p class="label">Por pagar</p>
       <p class="fig">${money(T.porPagar)}</p>
+      <p class="label">Por pagar</p>
       <dl class="stats">
         <div><dt>Entra</dt><dd>${money(T.ingresos)}</dd></div>
         <div><dt>Pagado</dt><dd>${money(T.pagado)}</dd></div>
-        <div class="${T.libre < 0 ? 'neg' : ''}"><dt>${T.libre < 0 ? 'Te falta' : 'Sin asignar'}</dt><dd>${money(Math.abs(T.libre))}</dd></div>
+        <div><dt>${T.libre < 0 ? 'Te falta' : 'Sobra'}</dt><dd>${money(T.libre)}</dd></div>
       </dl>
       ${strip(q, all)}
     </section>`;
@@ -162,11 +168,12 @@ function renderQ(q, dir = 0) {
 
   app.innerHTML = `
   <div class="view" data-dir="${dir}">
+    <div class="panel">
     <section class="q-head">
       <button class="nav" data-go="${ix - 1}" ${ix === 0 ? 'disabled' : ''} aria-label="Quincena anterior">${ICON.prev}</button>
       <div class="q-title">
-        <p class="q-sub">Quincena del ${q.h === 'a' ? '15' : q.start.getDate()}${tag ? ` · <span class="now">${tag}</span>` : ''}</p>
         <h1>${fmtDay(q.start)} – ${fmtDay(q.end)}${q.end.getFullYear() !== 2026 ? ` <span class="yr">${q.end.getFullYear()}</span>` : ''}</h1>
+        <p class="q-sub">Quincena del ${q.h === 'a' ? '15' : q.start.getDate()}${tag ? ` · <span class="now">${tag}</span>` : ''}</p>
       </div>
       <button class="nav" data-go="${ix + 1}" ${ix === QS.length - 1 ? 'disabled' : ''} aria-label="Quincena siguiente">${ICON.next}</button>
     </section>
@@ -174,6 +181,7 @@ function renderQ(q, dir = 0) {
     ${readout(q, T, all)}
 
     ${nota ? `<p class="nota">${esc(nota)}</p>` : ''}
+    </div>
 
     <div class="groups">
       ${group('Pagos', q, pagos, `<button class="add" data-add>${ICON.plus}<span>Agregar gasto</span></button>`)}
@@ -194,16 +202,16 @@ function renderCalendar() {
     const dashes = pagos.map((i) => `<i class="${i.paid ? 'on' : ''}"></i>`).join('');
     const past = q.end < today();
     return `<li><a href="#/q/${q.key}" class="cal-row${q.key === cur ? ' cur' : ''}${past ? ' past' : ''}">
-      <span class="cal-date">${fmtDay(q.start)} – ${fmtDay(q.end)}${q.start.getMonth() === 0 && q.h === 'a' ? ` <span class="yr">${q.start.getFullYear()}</span>` : ''}${q.key === cur ? ` <span class="cal-tag">· ${today() < q.start ? 'la que sigue' : 'ahora'}</span>` : ''}</span>
+      <span class="cal-date">${fmtDay(q.start)} – ${fmtDay(q.end)}${q.start.getMonth() === 0 && q.h === 'a' ? ` <span class="yr">${q.start.getFullYear()}</span>` : ''}${q.key === cur ? ` <span class="cal-tag"><i class="cal-dot" aria-hidden="true"></i>${today() < q.start ? 'la que sigue' : 'ahora'}</span>` : ''}</span>
       <span class="cal-dash" aria-label="${pagos.filter((i) => i.paid).length} de ${pagos.length} pagos hechos">${dashes}</span>
-      <span class="cal-num"><span class="cal-k">${T.libre < 0 ? 'Falta' : 'Sobra'}</span> ${money(Math.abs(T.libre))}</span>
+      <span class="cal-num"><span class="cal-k">${T.libre < 0 ? 'Te falta' : 'Sobra'}</span> ${money(T.libre)}</span>
     </a></li>`;
   }).join('');
   app.innerHTML = `
   <div class="view">
     <section class="readout cal-head">
-      <p class="label">Ahorro acumulado</p>
       <p class="fig">${money(ahorroTotal())}</p>
+      <p class="label">Ahorro acumulado</p>
       <p class="sub">Incluye los ${money(AHORRO_INICIAL)} que ya tenías y cada “Guardar en ahorro” que palomeas.</p>
     </section>
     <ol class="cal">${rows}</ol>
@@ -234,7 +242,13 @@ app.addEventListener('click', (e) => {
     tmp.innerHTML = readout(q, totals(q), all);
     const fresh = tmp.firstElementChild;
     // la tira conserva sus nodos: solo cambia la clase, así el punto se rellena con transición
-    fresh.querySelectorAll('.day').forEach((d, n) => { app.querySelectorAll('.day')[n]?.classList.toggle('done', d.classList.contains('done')); });
+    const cur = app.querySelectorAll('.day');
+    fresh.querySelectorAll('.day').forEach((d, n) => {
+      const c = cur[n]; if (!c) return;
+      c.classList.toggle('done', d.classList.contains('done'));
+      c.classList.toggle('part', d.classList.contains('part'));
+      c.querySelector('.dot').innerHTML = d.querySelector('.dot').innerHTML;
+    });
     const old = app.querySelector('.readout');
     old.querySelector('.fig').textContent = fresh.querySelector('.fig').textContent;
     old.querySelector('.stats').replaceWith(fresh.querySelector('.stats'));
@@ -292,16 +306,25 @@ function closeSheet() {
   setTimeout(() => { sheet.classList.remove('closing'); sheet.close(); }, 200);
 }
 
+form.day.addEventListener('input', () => form.day.setCustomValidity(''));
 form.addEventListener('submit', (e) => {
   e.preventDefault();
   const amount = Math.max(0, Math.round(Number(String(form.amount.value).replace(/[^\d.]/g, '')) || 0));
   const k = viewKey;
   if (editing.extra) {
     const name = form.concepto.value.trim() || 'Gasto';
-    const day = parseInt(form.day.value, 10);
+    const q = byKey[k];
+    let day = parseInt(form.day.value, 10);
+    const when = day >= 1 && day <= 31 ? dateOf(q, day) : null;
+    if (form.day.value.trim() && (!when || when < q.start || when > q.end)) {
+      form.day.setCustomValidity(`Pon un día entre el ${fmtDay(q.start)} y el ${fmtDay(q.end)}, o déjalo vacío.`);
+      form.day.reportValidity();
+      return;
+    }
+    if (!when) day = null;
     const list = (S.extras[k] ||= []);
     const ex = list.find((x) => x.id === editing.id);
-    const data = { name, amount, kind: 'pago', day: day >= 1 && day <= 31 ? day : null };
+    const data = { name, amount, kind: 'pago', day };
     if (ex) Object.assign(ex, data); else list.push({ id: 'x' + Date.now().toString(36), ...data });
   } else if (form.fwd.checked) {
     const rules = (S.fwd[editing.id] || []).filter((r) => r.from < k);

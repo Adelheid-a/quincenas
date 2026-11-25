@@ -8,7 +8,6 @@
   --ink: #f4f4f5;
   --ink-2: #a6a6ad;   /* 8.1:1 sobre --bg */
   --ink-3: #85858d;   /* 5.3:1 sobre --bg, 4.9:1 sobre --bg-2 */
-  --warn: #ff9f8f;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
   --font-d: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -69,7 +68,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 /* ---------- encabezado de quincena ---------- */
 .q-head { display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; gap: 8px; padding: 20px 0 4px; }
 .q-title { text-align: center; }
-.q-sub { margin: 0 0 4px; font-size: 13px; color: var(--ink-3); }
+.q-sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-3); }
 .q-sub .now { color: var(--ink); }
 .q-head h1 { margin: 0; font: 500 20px/1.2 var(--font-d); letter-spacing: -0.01em; }
 .yr { color: var(--ink-3); font-weight: 400; }
@@ -85,8 +84,9 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 /* ---------- lectura principal ---------- */
 .readout { padding: 28px 0 8px; text-align: center; }
 .label { margin: 0; font-size: 13px; color: var(--ink-3); letter-spacing: 0.02em; }
+.readout .label { margin-top: 8px; }
 .fig {
-  margin: 6px 0 0;
+  margin: 0;
   font: 200 clamp(56px, 17vw, 84px)/1 var(--font-d);
   letter-spacing: -0.04em;
 }
@@ -97,7 +97,6 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .stats > div + div { border-left: 1px solid var(--line); }
 .stats dt { font-size: 12px; color: var(--ink-3); }
 .stats dd { margin: 4px 0 0; font: 400 17px/1.2 var(--font-d); }
-.stats .neg dd, .stats .neg dt { color: var(--warn); }
 
 /* ---------- tira de días ---------- */
 .strip {
@@ -105,9 +104,10 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
   display: grid; grid-template-columns: repeat(var(--n), 1fr);
   position: relative;
 }
-.strip::before { /* la línea de la quincena */
+.strip::before, .strip::after { /* la línea de la quincena; ::after es lo que ya pasó */
   content: ""; position: absolute; left: 0; right: 0; top: 9px; height: 1px; background: var(--line-2);
 }
+.strip::after { background: var(--ink-2); transform-origin: left; transform: scaleX(var(--fill, 0)); }
 .day { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 40px; }
 .day .dot {
   position: relative; z-index: 1;
@@ -123,6 +123,7 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .day.has .dot b { font: 600 9px/1 var(--font); color: var(--ink); }
 .day.done .dot { background: var(--ink); }
 .day.done .dot b { color: var(--bg); }
+.day.part .dot { box-shadow: inset 0 0 0 1.5px var(--ink), inset 0 0 0 4px var(--bg), inset 0 0 0 7.5px var(--ink-3); }
 .day .num { font-size: 11px; color: var(--ink-3); line-height: 1; }
 .day.has .num { color: var(--ink-2); }
 .day.today::after { /* hoy: línea vertical */
@@ -207,8 +208,10 @@ svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width:
 .cal-dash { grid-area: 2 / 1 / 3 / 3; display: flex; gap: 4px; }
 .cal-dash i { flex: 1; max-width: 28px; height: 2px; background: var(--line-2); }
 .cal-dash i.on { background: var(--ink); }
-.cal-tag { color: var(--ink-3); font-weight: 400; }
-.cal-row.past { opacity: 0.55; }
+.cal-tag { color: var(--ink-2); font-weight: 400; margin-left: 6px; display: inline-flex; align-items: center; gap: 6px; }
+.cal-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .cal-row:hover { background: var(--bg-2); } }
+.cal-row.past .cal-date, .cal-row.past .cal-num { color: var(--ink-3); }
 .cal-head .fig { font-size: clamp(48px, 14vw, 72px); }
 
 /* ---------- hoja inferior ---------- */
@@ -245,7 +248,7 @@ dialog:not(.is-extra) .only-extra { display: none; }
 .btn:active { transform: scale(0.97); }
 .btn.solid { background: var(--ink); color: var(--bg); flex: 1; }
 .btn.ghost { color: var(--ink-2); }
-.btn.danger { color: var(--warn); margin-right: auto; padding-left: 0; }
+.btn.danger { color: var(--ink-2); margin-right: auto; padding-left: 0; }
 .btn[hidden] { display: none; }
 
 /* ---------- cambio de quincena ---------- */
@@ -261,10 +264,8 @@ dialog:not(.is-extra) .only-extra { display: none; }
   .view:not(:has(.cal)) {
     display: grid; grid-template-columns: 420px 1fr; column-gap: 72px; align-items: start;
   }
-  .view:not(:has(.cal)) .q-head,
-  .view:not(:has(.cal)) .readout,
-  .view:not(:has(.cal)) .nota { grid-column: 1; }
-  .view:not(:has(.cal)) .groups { grid-column: 2; grid-row: 1 / span 4; padding-top: 4px; }
+  .panel { grid-column: 1; position: sticky; top: 64px; }
+  .view:not(:has(.cal)) .groups { grid-column: 2; padding-top: 4px; }
   .view:not(:has(.cal)) .group:first-child { margin-top: 20px; }
   .view:has(.cal) { max-width: 640px; margin: 0 auto; }
 }
