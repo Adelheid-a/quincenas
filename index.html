@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Quincenas</title>
+  <meta name="theme-color" content="#0a0a0b">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quincenas">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section id="lock" hidden aria-label="Desbloquear">
+    <p class="lock-brand">Quincenas</p>
+    <div class="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <p class="pin-msg" role="status" aria-live="polite">Escribe tu PIN</p>
+    <div class="keypad"><button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button><button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button><button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button><span></span><button type="button" data-k="0">0</button><button type="button" data-k="del" aria-label="Borrar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5-6z"/><path d="M12 10l4 4M16 10l-4 4"/></svg></button></div>
+  </section>
+
+  <header class="top">
+    <span class="brand">Quincenas</span>
+  </header>
+
+  <main id="app"></main>
+
+  <nav class="tabs" aria-label="Secciones">
+    <a href="#/q">Quincena</a>
+    <a href="#/calendario">Calendario</a>
+  </nav>
+
+  <dialog id="sheet" aria-labelledby="sheet-title">
+    <form method="dialog" autocomplete="off">
+      <span class="grip" aria-hidden="true"></span>
+      <h2 id="sheet-title">Editar</h2>
+      <label class="field only-extra"><span>Concepto</span><input name="concepto" maxlength="40" placeholder="Ej. Regalo"></label>
+      <label class="field"><span>Monto</span><input name="amount" inputmode="numeric" pattern="[0-9]*" placeholder="0" required></label>
+      <label class="field only-extra"><span>Día que se paga (opcional)</span><input name="day" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="Ej. 20"></label>
+      <label class="fwd-row"><input type="checkbox" name="fwd"><span>Usar este monto también en las siguientes quincenas</span></label>
+      <div class="actions">
+        <button type="button" class="btn ghost danger" data-remove>Quitar</button>
+        <button type="button" class="btn ghost" data-cancel>Cancelar</button>
+        <button type="submit" class="btn solid">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="lock.js"></script>
+</body>
+</html>
