@@ -1,5 +1,5 @@
 // Guarda la app la primera vez para que abra sin internet.
-const CACHE = 'quincenas-v3';
+const CACHE = 'quincenas-v4';
 const FILES = ['./', 'index.html', 'styles.css', 'lock.js', 'app.js', 'plan.enc.json', 'manifest.webmanifest',
   'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
